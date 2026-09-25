@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
 import RequestCard from "@/components/portal/RequestCard";
 import RequestDrawer from "@/components/portal/RequestDrawer";
+import { useCatalog } from "@/hooks/useCatalog";
 import NewRequestDialog from "@/components/portal/NewRequestDialog";
 import { Button } from "@/components/ui/button";
 import { BRL, computeMetrics, isOpen, resolveAuthority } from "@/lib/commercial-engine";
@@ -31,6 +32,7 @@ export default function Solicitacoes() {
   const { user, profile } = useAuth();
   const { requests } = useCommercialRequests();
   const [filter, setFilter] = useState<Filter>("abertas");
+  useCatalog();
   const [line, setLine] = useState<GlassProductLine | "todas">("todas");
   const [type, setType] = useState<RequestType | "todos">("todos");
   const [query, setQuery] = useState("");
