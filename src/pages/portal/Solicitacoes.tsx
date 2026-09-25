@@ -14,7 +14,7 @@ import {
   type RequestType,
 } from "@/types/commercial";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 type Filter = "abertas" | "diretoria" | "financeira" | "comercial" | "finalizadas" | "todas";
 
@@ -35,6 +35,7 @@ export default function Solicitacoes() {
   const [type, setType] = useState<RequestType | "todos">("todos");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CommercialRequest | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Aprovador";
 
