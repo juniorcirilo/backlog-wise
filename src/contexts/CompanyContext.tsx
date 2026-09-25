@@ -48,7 +48,7 @@ interface CompanyCtx {
 const Ctx = createContext<CompanyCtx | null>(null);
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const { user, isAdmin, role } = useAuth();
+  const { user, isAdmin, role, loading } = useAuth();
   const [companies, setCompanies] = useState<Company[]>(() => load(LS_COMPANIES, COMPANIES_MOCK));
   const [accesses, setAccesses] = useState<UserCompanyAccess[]>(() => load(LS_ACCESS, ACCESS_MOCK));
   const [userCfg, setUserCfg] = useState<UserCfg>(() =>
@@ -72,13 +72,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   // Garante que a empresa ativa é permitida
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || loading) return;
     const ok = activeCompanyId === CONSOLIDATED ? hasGlobal : allowedCompanies.some(c => c.id === activeCompanyId);
     if (!ok) {
       const def = cfg?.defaultCompanyId && allowedCompanies.some(c => c.id === cfg.defaultCompanyId) ? cfg.defaultCompanyId : null;
       setActive(def ?? (hasGlobal ? CONSOLIDATED : allowedCompanies[0]?.id ?? ""));
     }
-  }, [uid, activeCompanyId, allowedCompanies, hasGlobal, cfg?.defaultCompanyId]);
+  }, [uid, loading, activeCompanyId, allowedCompanies, hasGlobal, cfg?.defaultCompanyId]);
 
   const setActiveCompanyId = useCallback((id: ActiveCompanyId) => {
     setActive(id);

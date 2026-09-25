@@ -12,7 +12,7 @@ export default function CompanySwitcher({ className = "" }: { className?: string
       <select
         value={activeCompanyId}
         onChange={e => setActiveCompanyId(e.target.value)}
-        className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none"
+        className="w-0 min-w-0 flex-1 truncate bg-transparent text-sm font-medium outline-none"
       >
         {canConsolidate && <option value={CONSOLIDATED}>Visão consolidada — todas as unidades</option>}
         {allowedCompanies.map(c => (
