@@ -89,7 +89,7 @@ export default function RequestDrawer({
       action,
       justification: justification.trim(),
       actor: actorName,
-      role: authority.level === "diretoria" ? "diretoria" : authority.level,
+      role: request.assignedTo ?? authority.level,
     });
     toast({
       title:
