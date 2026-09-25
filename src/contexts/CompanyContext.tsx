@@ -45,7 +45,9 @@ interface CompanyCtx {
   defaultNewCompanyId: () => string;
 }
 
-const Ctx = createContext<CompanyCtx | null>(null);
+// Mantém a mesma instância do contexto entre recarregamentos rápidos do preview
+const g = globalThis as unknown as { __companyCtx?: React.Context<CompanyCtx | null> };
+const Ctx = g.__companyCtx ?? (g.__companyCtx = createContext<CompanyCtx | null>(null));
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const { user, isAdmin, role, loading } = useAuth();
