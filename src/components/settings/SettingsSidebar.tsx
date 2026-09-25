@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import {
-  User, KeyRound, ListPlus, Building2, FlaskConical, Users, Shield, type LucideIcon,
+  User, ListPlus, Building2, Users, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SettingsSection = "profile" | "companies" | "catalog" | "api-keys" | "demo" | "team" | "security";
+export type SettingsSection = "profile" | "companies" | "catalog" | "team";
 
 type Item =
   | { kind: "section"; id: SettingsSection; label: string; icon: LucideIcon; adminOnly?: boolean }
@@ -14,10 +14,7 @@ const ITEMS: Item[] = [
   { kind: "section", id: "profile",  label: "Meu Perfil",    icon: User },
   { kind: "section", id: "companies", label: "Empresas e Filiais", icon: Building2, adminOnly: true },
   { kind: "section", id: "catalog",  label: "Cadastros",     icon: ListPlus },
-  { kind: "section", id: "api-keys", label: "Chaves de API", icon: KeyRound },
-  { kind: "section", id: "demo",     label: "Demonstração",  icon: FlaskConical },
   { kind: "section", id: "team",     label: "Equipe",        icon: Users,  adminOnly: true },
-  { kind: "section", id: "security", label: "Segurança",     icon: Shield, adminOnly: true },
 ];
 
 interface Props {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { usersRepo } from "@/services/mockStorage";
 import { useAuth, AppRole } from "@/contexts/AuthContext";
 import { Check, X, ShieldOff, ShieldCheck, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,21 +36,8 @@ export default function TeamManagement({ embedded = false }: TeamManagementProps
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-      supabase.from("profiles").select("id,full_name,email,status,is_active,is_approved,created_at"),
-      supabase.from("user_roles").select("user_id,role"),
-    ]);
-    if (pErr || rErr) {
-      toast.error("Erro ao carregar membros");
-      setLoading(false);
-      return;
-    }
-    const roleMap = new Map<string, AppRole>();
-    (roles || []).forEach((r: any) => roleMap.set(r.user_id, r.role));
-    const merged: Member[] = (profiles || []).map((p: any) => ({
-      ...p,
-      role: roleMap.get(p.id) ?? null,
-    }));
+    const list = await usersRepo.list();
+    const merged: Member[] = list.map((u) => ({ ...u, role: u.role }));
     merged.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
     setMembers(merged);
     setLoading(false);
@@ -62,7 +49,7 @@ export default function TeamManagement({ embedded = false }: TeamManagementProps
 
   const approve = async (m: Member) => {
     setBusy(m.id);
-    const { error } = await supabase.from("profiles").update({ is_approved: true }).eq("id", m.id);
+    const error = await usersRepo.update(m.id, { is_approved: true }).then(() => null, (e) => e);
     setBusy(null);
     if (error) return toast.error("Não foi possível aprovar");
     toast.success(`${m.full_name} aprovado`);
@@ -74,10 +61,7 @@ export default function TeamManagement({ embedded = false }: TeamManagementProps
     setBusy(m.id);
     // hard delete: profile + role (cascade do auth.users seria ideal mas requer service role)
     // marcamos como inativo + não aprovado:
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_approved: false, is_active: false })
-      .eq("id", m.id);
+    const error = await usersRepo.update(m.id, { is_approved: false, is_active: false }).then(() => null, (e) => e);
     setBusy(null);
     if (error) return toast.error("Erro ao rejeitar");
     toast.success("Membro rejeitado");
@@ -90,8 +74,7 @@ export default function TeamManagement({ embedded = false }: TeamManagementProps
     }
     setBusy(m.id);
     // delete + insert para garantir uniq
-    await supabase.from("user_roles").delete().eq("user_id", m.id);
-    const { error } = await supabase.from("user_roles").insert({ user_id: m.id, role: newRole });
+    const error = await usersRepo.update(m.id, { role: newRole }).then(() => null, (e) => e);
     setBusy(null);
     if (error) return toast.error("Erro ao alterar role");
     toast.success("Role atualizada");
@@ -106,10 +89,7 @@ export default function TeamManagement({ embedded = false }: TeamManagementProps
       return toast.error("Não é possível desativar o único administrador");
     }
     setBusy(m.id);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_active: !m.is_active })
-      .eq("id", m.id);
+    const error = await usersRepo.update(m.id, { is_active: !m.is_active }).then(() => null, (e) => e);
     setBusy(null);
     if (error) return toast.error("Erro");
     toast.success(m.is_active ? "Membro desativado" : "Membro reativado");

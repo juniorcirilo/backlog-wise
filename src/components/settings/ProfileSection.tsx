@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Mail, KeyRound, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { usersRepo } from "@/services/mockStorage";
 
 export default function ProfileSection() {
   const { user, profile, refreshProfile } = useAuth();
@@ -25,10 +25,8 @@ export default function ProfileSection() {
       return;
     }
     setSavingName(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: trimmed })
-      .eq("id", user.id);
+    let error: Error | null = null;
+    try { await usersRepo.update(user.id, { full_name: trimmed }); } catch (e) { error = e as Error; }
     setSavingName(false);
     if (error) {
       toast.error("Não foi possível salvar", { description: error.message });
@@ -60,7 +58,7 @@ export default function ProfileSection() {
       return;
     }
     setSavingPassword(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const error = null as Error | null; // modo local: sem senha real
     setSavingPassword(false);
     if (error) {
       toast.error("Não foi possível alterar a senha", { description: error.message });

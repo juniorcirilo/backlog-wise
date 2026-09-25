@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { usersRepo } from "@/services/mockStorage";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +23,9 @@ export default function UserCompanyAccessSection() {
   const [global, setGlobal] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .order("full_name")
-      .then(({ data }) => {
-        const real = (data ?? []).map(p => ({ id: p.id, name: p.full_name, email: p.email }));
-        setUsers([...real, ...mockUsers.map(u => ({ id: u.id, name: u.name, email: u.email, sample: true }))]);
-      });
+    const all = usersRepo.listSync().map(p => ({ id: p.id, name: p.full_name, email: p.email }));
+    const extra = mockUsers.filter(m => !all.some(a => a.id === m.id)).map(u => ({ id: u.id, name: u.name, email: u.email, sample: true }));
+    setUsers([...all, ...extra]);
   }, [mockUsers]);
 
   const linksOf = (id: string) => accesses.filter(a => a.userId === id && a.active).map(a => a.companyId);
