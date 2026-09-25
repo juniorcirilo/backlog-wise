@@ -126,14 +126,14 @@ export function useCommercialRequests() {
   );
 
   const forward = useCallback(
-    (id: string, target: ApproverRole, justification: string, actor: string, role: UserRole) => {
+    (id: string, target: ApproverRole, justification: string, actor: string, role: UserRole, action: "encaminhou" | "reabriu" = "encaminhou") => {
       const next = read().map(r => {
         if (r.id !== id) return r;
         const merged: CommercialRequest = { ...r, assignedTo: target };
         merged.status = queueStatus(merged);
         merged.history = [
           ...r.history,
-          { id: `h${r.history.length + 1}-${Date.now()}`, role, actor, action: "encaminhou", justification, at: new Date().toISOString() },
+          { id: `h${r.history.length + 1}-${Date.now()}`, role, actor, action, justification, at: new Date().toISOString() },
         ];
         return merged;
       });

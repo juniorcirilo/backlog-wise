@@ -41,6 +41,7 @@ import {
   Factory,
   Layers,
   Pencil,
+  RotateCcw,
   Send,
   ShieldAlert,
   User,
@@ -105,6 +106,19 @@ export default function RequestDrawer({
   };
 
   const currentRole: ApproverRole = request.assignedTo ?? authority.level;
+
+  const closed = !isOpen(request);
+
+  const doReopen = () => {
+    if (justification.trim().length < 10) {
+      toast({ title: "Justificativa obrigatória", description: "Explique em pelo menos 10 caracteres por que está reabrindo.", variant: "destructive" });
+      return;
+    }
+    forward(request.id, forwardTo, justification.trim(), actorName, currentRole, "reabriu");
+    toast({ title: "Solicitação reaberta", description: `${request.id} voltou para ${ROLE_LABEL[forwardTo]}.` });
+    setJustification("");
+    onOpenChange(false);
+  };
 
   const doForward = () => {
     if (justification.trim().length < 10) {
@@ -269,7 +283,7 @@ export default function RequestDrawer({
 
         {/* Decisão */}
         <section className="mt-6 rounded-xl border bg-bg-elevated p-4">
-          <h3 className="text-sm font-semibold">Registrar decisão</h3>
+          <h3 className="text-sm font-semibold">{closed ? "Reabrir solicitação" : "Registrar decisão"}</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             A justificativa é obrigatória e fica registrada na trilha de auditoria.
           </p>
@@ -279,6 +293,24 @@ export default function RequestDrawer({
             placeholder="Ex.: Aprovado considerando recorrência do cliente e ocupação de forno no período."
             className="mt-3 min-h-24"
           />
+          {closed ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">Reabrir e enviar para</span>
+              <select
+                value={forwardTo}
+                onChange={e => setForwardTo(e.target.value as ApproverRole)}
+                className="h-9 rounded-lg border border-border bg-bg-surface-1 px-2.5 text-sm outline-none focus:border-accent"
+              >
+                {APPROVER_ROLES.map(r => (
+                  <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                ))}
+              </select>
+              <Button onClick={doReopen} className="gap-2">
+                <RotateCcw className="h-4 w-4" /> Reabrir
+              </Button>
+            </div>
+          ) : (
+          <>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={() => act("aprovou")} className="gap-2">
               <CheckCircle2 className="h-4 w-4" /> Aprovar
@@ -305,6 +337,8 @@ export default function RequestDrawer({
               <Send className="h-4 w-4" /> Encaminhar
             </Button>
           </div>
+          </>
+          )}
         </section>
       </SheetContent>
     </Sheet>

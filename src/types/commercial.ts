@@ -35,7 +35,7 @@ export interface ApprovalStep {
   id: string;
   role: UserRole;
   actor: string;
-  action: "criou" | "aprovou" | "rejeitou" | "solicitou_ajuste" | "encaminhou" | "editou";
+  action: "criou" | "aprovou" | "rejeitou" | "solicitou_ajuste" | "encaminhou" | "editou" | "reabriu";
   justification: string;
   at: string; // ISO
 }
@@ -86,6 +86,7 @@ export const ACTION_LABEL: Record<ApprovalStep["action"], string> = {
   solicitou_ajuste: "solicitou ajuste",
   encaminhou: "encaminhou",
   editou: "editou",
+  reabriu: "reabriu",
 };
 
 export const PRODUCT_LINE_LABEL: Record<GlassProductLine, string> = {
