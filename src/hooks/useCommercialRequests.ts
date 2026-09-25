@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCompany } from "@/contexts/CompanyContext";
+import { REQUEST_COMPANY_MOCK } from "@/mocks/companiesMock";
 import { COMMERCIAL_REQUESTS } from "@/data/commercial-mock";
 import { queueStatus } from "@/lib/commercial-engine";
 import type { ApprovalStatus, ApproverRole, CommercialRequest, UserRole } from "@/types/commercial";
@@ -21,6 +23,9 @@ function read(): CommercialRequest[] {
   return COMMERCIAL_REQUESTS;
 }
 
+const withCompany = (list: CommercialRequest[]) =>
+  list.map(r => (r.companyId ? r : { ...r, companyId: REQUEST_COMPANY_MOCK[r.id] }));
+
 function write(data: CommercialRequest[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -40,7 +45,9 @@ export interface DecisionInput {
 }
 
 export function useCommercialRequests() {
-  const [requests, setRequests] = useState<CommercialRequest[]>(() => read());
+  const { matchesActive, defaultNewCompanyId } = useCompany();
+  const [all, setRequests] = useState<CommercialRequest[]>(() => read());
+  const requests = useMemo(() => withCompany(all).filter(r => matchesActive(r.companyId)), [all, matchesActive]);
 
   useEffect(() => {
     const l: Listener = data => setRequests(data);
@@ -88,6 +95,7 @@ export function useCommercialRequests() {
       }, 0) + 1;
     const request: CommercialRequest = {
       ...input,
+      companyId: input.companyId ?? defaultNewCompanyId(),
       id: `SOL-${year}-${String(seq).padStart(3, "0")}`,
       createdAt: new Date().toISOString(),
       status: "analise_comercial",
@@ -106,7 +114,7 @@ export function useCommercialRequests() {
     request.status = queueStatus(request);
     write([request, ...current]);
     return request;
-  }, []);
+  }, [defaultNewCompanyId]);
 
   const update = useCallback(
     (id: string, input: NewRequestInput, actor: string, role: UserRole, note: string) => {
