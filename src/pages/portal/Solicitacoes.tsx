@@ -62,11 +62,16 @@ export default function Solicitacoes() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 lg:px-12 lg:py-10">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Solicitações</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {list.length} solicitações · {BRL(total)} em valor líquido
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Solicitações</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {list.length} solicitações · {BRL(total)} em valor líquido
+          </p>
+        </div>
+        <Button onClick={() => setNewOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" /> Nova solicitação
+        </Button>
       </header>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -130,6 +135,7 @@ export default function Solicitacoes() {
       </div>
 
       <RequestDrawer request={selected} onOpenChange={o => !o && setSelected(null)} actorName={userName} />
+      <NewRequestDialog open={newOpen} onOpenChange={setNewOpen} salesRep={userName} />
     </div>
   );
 }
