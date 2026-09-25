@@ -122,18 +122,18 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!registry || !registry.is_active) {
-      return json({ error: "Jira not connected", code: "not_connected" }, 404);
+      return json({ error: "Jira not connected", code: "not_connected" }, 200);
     }
     const meta = (registry.metadata ?? {}) as { domain?: string; email?: string };
     if (!meta.domain || !meta.email) {
-      return json({ error: "Metadata Jira incompleta", code: "not_connected" }, 400);
+      return json({ error: "Metadata Jira incompleta", code: "not_connected" }, 200);
     }
 
     const { data: secretValue, error: readErr } = await adminClient.rpc("vault_read_secret", {
       p_service: "jira",
     });
     if (readErr || !secretValue) {
-      return json({ error: "Secret not found", code: "not_connected" }, 404);
+      return json({ error: "Secret not found", code: "not_connected" }, 200);
     }
 
     const basic = btoa(`${meta.email}:${secretValue}`);
@@ -170,12 +170,12 @@ Deno.serve(async (req) => {
         });
 
         if (res.status === 401 || res.status === 403) {
-          return json({ error: "Invalid Jira credentials", code: "invalid_credentials" }, 401);
+          return json({ error: "Invalid Jira credentials", code: "invalid_credentials" }, 200);
         }
         if (!res.ok) {
           const text = await res.text().catch(() => "");
           console.error(`Jira search/jql failed for ${key}:`, res.status, text.slice(0, 300));
-          return json({ error: "Jira request failed", code: "fetch_failed", project: key }, 502);
+          return json({ error: "Jira request failed", code: "fetch_failed", project: key }, 200);
         }
 
         const data = await res.json() as {
@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     return json({ issues: allIssues, projectMeta });
   } catch (e) {
     console.error("list-jira-issues internal error:", e);
-    return json({ error: "Internal error", code: "internal" }, 500);
+    return json({ error: "Internal error", code: "internal" }, 200);
   }
 });
 
