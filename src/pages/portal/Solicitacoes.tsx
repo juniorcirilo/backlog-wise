@@ -32,6 +32,7 @@ export default function Solicitacoes() {
   const { user, profile } = useAuth();
   const { requests } = useCommercialRequests();
   const [filter, setFilter] = useState<Filter>("abertas");
+  useCatalog();
   const [line, setLine] = useState<GlassProductLine | "todas">("todas");
   const [type, setType] = useState<RequestType | "todos">("todos");
   const [query, setQuery] = useState("");
