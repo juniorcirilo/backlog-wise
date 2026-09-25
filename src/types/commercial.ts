@@ -1,20 +1,8 @@
 // Domínio do Portal de Alçadas Comerciais & Financeiras — Indústria Vidreira
 
-export type RequestType =
-  | "desconto_extra"
-  | "tabela_condicao_especial"
-  | "devolucao_avaria"
-  | "credito_emergencial"
-  | "garantia_bonificacao";
+export type RequestType = string; // padrões + cadastrados em Configurações
 
-export type GlassProductLine =
-  | "temperado_incolor"
-  | "temperado_colorido"
-  | "laminado_comum"
-  | "laminado_temperado"
-  | "espelho_prata"
-  | "insulado_termoacustico"
-  | "box_padrao";
+export type GlassProductLine = string; // padrões + cadastradas em Configurações
 
 export type ApprovalStatus =
   | "rascunho"
