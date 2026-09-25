@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import CompanySwitcher from "@/components/company/CompanySwitcher";
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, profile, signOut } = useAuth();
@@ -41,6 +42,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <p className="font-bold tracking-tight">Portal de Alçadas</p>
           <p className="-mt-0.5 text-[11px] text-sidebar-foreground/60">Comercial & Financeiro · Vidros</p>
         </div>
+      </div>
+
+      <div className="px-3 pt-4">
+        <CompanySwitcher className="bg-sidebar-accent/50 border-sidebar-border" />
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">

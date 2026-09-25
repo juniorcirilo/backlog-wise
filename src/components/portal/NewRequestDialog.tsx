@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useCatalog } from "@/hooks/useCatalog";
+import { useCompany } from "@/contexts/CompanyContext";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
 import { BRL2, itemArea, resolveAuthority } from "@/lib/commercial-engine";
 import {
@@ -93,6 +94,11 @@ export default function NewRequestDialog({
 }) {
   const { create, update } = useCommercialRequests();
   const catalog = useCatalog();
+  const { allowedCompanies, defaultNewCompanyId } = useCompany();
+  const [companyId, setCompanyId] = useState("");
+  useEffect(() => {
+    if (open) setCompanyId(editing?.companyId ?? defaultNewCompanyId());
+  }, [open, editing, defaultNewCompanyId]);
   const addNew = (kind: "types" | "lines", onId: (id: string) => void) => {
     const label = window.prompt(kind === "types" ? "Nome do novo tipo de solicitação" : "Nome do novo item / linha de produto");
     if (!label) return;
@@ -232,6 +238,7 @@ export default function NewRequestDialog({
       justification: d.justification,
       items: newItems,
       assignedTo: target === "auto" ? undefined : target,
+      companyId: companyId || undefined,
     };
 
     if (editing) {
@@ -397,6 +404,14 @@ export default function NewRequestDialog({
           <Textarea value={justification} onChange={e => setJustification(e.target.value)} placeholder="Ex.: Cliente estratégico com recorrência mensal; desconto viabiliza fechamento da obra." className="min-h-20" />
         </label>
 
+        <label className="mt-3 block space-y-1">
+          <span className="text-xs font-medium text-muted-foreground">Unidade (matriz/filial)</span>
+          <select value={companyId} onChange={e => setCompanyId(e.target.value)} className={inputCls}>
+            {allowedCompanies.map(c => (
+              <option key={c.id} value={c.id}>{c.code} · {c.tradeName}</option>
+            ))}
+          </select>
+        </label>
         <label className="mt-3 block space-y-1">
           <span className="text-xs font-medium text-muted-foreground">Enviar para</span>
           <select value={target} onChange={e => setTarget(e.target.value as ApproverRole | "auto")} className={inputCls}>

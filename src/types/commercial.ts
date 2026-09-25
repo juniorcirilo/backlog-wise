@@ -61,6 +61,7 @@ export interface CommercialRequest {
   items: CommercialItem[];
   history: ApprovalStep[];
   assignedTo?: ApproverRole; // setor destinatário atual
+  companyId?: string; // unidade (matriz/filial)
 }
 
 export type ApproverRole = Exclude<UserRole, "vendedor">;

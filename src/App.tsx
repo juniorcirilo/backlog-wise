@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CompanyProvider } from "@/contexts/CompanyContext";
 import { DemoProvider } from "@/contexts/DemoContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLayout from "@/components/layout/AppLayout";
@@ -35,6 +36,7 @@ const App = () => (
       <BrowserRouter>
         <DemoProvider>
         <AuthProvider>
+          <CompanyProvider>
           <AppRoot>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
@@ -59,6 +61,7 @@ const App = () => (
           </Routes>
           <ConsultorChat />
           </AppRoot>
+          </CompanyProvider>
         </AuthProvider>
         </DemoProvider>
       </BrowserRouter>
