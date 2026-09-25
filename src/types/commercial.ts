@@ -35,7 +35,7 @@ export interface ApprovalStep {
   id: string;
   role: UserRole;
   actor: string;
-  action: "criou" | "aprovou" | "rejeitou" | "solicitou_ajuste" | "encaminhou";
+  action: "criou" | "aprovou" | "rejeitou" | "solicitou_ajuste" | "encaminhou" | "editou";
   justification: string;
   at: string; // ISO
 }
@@ -72,7 +72,21 @@ export interface CommercialRequest {
   justification: string;
   items: CommercialItem[];
   history: ApprovalStep[];
+  assignedTo?: ApproverRole; // setor destinatário atual
 }
+
+export type ApproverRole = Exclude<UserRole, "vendedor">;
+
+export const APPROVER_ROLES: ApproverRole[] = ["gerente_comercial", "gerente_financeiro", "diretoria"];
+
+export const ACTION_LABEL: Record<ApprovalStep["action"], string> = {
+  criou: "criou e enviou",
+  aprovou: "aprovou",
+  rejeitou: "rejeitou",
+  solicitou_ajuste: "solicitou ajuste",
+  encaminhou: "encaminhou",
+  editou: "editou",
+};
 
 export const PRODUCT_LINE_LABEL: Record<GlassProductLine, string> = {
   temperado_incolor: "Temperado Incolor",

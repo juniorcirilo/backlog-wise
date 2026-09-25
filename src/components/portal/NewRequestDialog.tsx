@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import {
   Dialog,
@@ -10,10 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
-import { BRL2, itemArea } from "@/lib/commercial-engine";
+import { BRL2, itemArea, resolveAuthority } from "@/lib/commercial-engine";
 import {
+  APPROVER_ROLES,
   PRODUCT_LINE_LABEL,
   REQUEST_TYPE_LABEL,
+  ROLE_LABEL,
+  type ApproverRole,
+  type CommercialRequest,
+  type UserRole,
   type CommercialItem,
   type GlassProductLine,
   type RequestType,
@@ -76,12 +81,18 @@ export default function NewRequestDialog({
   open,
   onOpenChange,
   salesRep,
+  editing,
+  editorRole = "vendedor",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   salesRep: string;
+  editing?: CommercialRequest | null;
+  editorRole?: UserRole;
 }) {
-  const { create } = useCommercialRequests();
+  const { create, update } = useCommercialRequests();
+  const [target, setTarget] = useState<ApproverRole | "auto">("auto");
+  const [editNote, setEditNote] = useState("");
   const { toast } = useToast();
 
   const [type, setType] = useState<RequestType>("desconto_extra");
@@ -97,6 +108,37 @@ export default function NewRequestDialog({
   const [plantNotes, setPlantNotes] = useState("");
   const [justification, setJustification] = useState("");
   const [items, setItems] = useState<ItemDraft[]>([emptyItem()]);
+
+  useEffect(() => {
+    if (!open || !editing) return;
+    const e = editing;
+    setType(e.type);
+    setTitle(e.title);
+    setCustomer(e.customer);
+    setSegment(e.customerSegment);
+    setDiscount(String(e.discountPercent));
+    setTerm(String(e.paymentTermDays));
+    setCreditLimit(String(e.creditLimit));
+    setCreditUsed(String(e.creditUsed));
+    setPunctuality(String(e.paymentPunctuality));
+    setDelivery(e.deliveryDate.slice(0, 10));
+    setPlantNotes(e.plantNotes);
+    setJustification(e.justification);
+    setTarget(e.assignedTo ?? "auto");
+    setEditNote("");
+    setItems(
+      e.items.map(it => ({
+        line: it.line,
+        description: it.description,
+        thicknessMm: String(it.thicknessMm),
+        widthMm: String(it.widthMm),
+        heightMm: String(it.heightMm),
+        quantity: String(it.quantity),
+        unitPricePerM2: String(it.unitPricePerM2),
+        costPerM2: String(it.costPerM2),
+      })),
+    );
+  }, [open, editing]);
 
   const setItem = (idx: number, patch: Partial<ItemDraft>) =>
     setItems(prev => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
@@ -115,6 +157,8 @@ export default function NewRequestDialog({
     setPlantNotes("");
     setJustification("");
     setItems([emptyItem()]);
+    setTarget("auto");
+    setEditNote("");
   };
 
   const submit = () => {
@@ -157,7 +201,12 @@ export default function NewRequestDialog({
       costPerM2: it.costPerM2,
     }));
 
-    const created = create({
+    if (editing && editNote.trim().length < 10) {
+      toast({ title: "Motivo da alteração obrigatório", description: "Descreva em pelo menos 10 caracteres o que foi alterado.", variant: "destructive" });
+      return;
+    }
+
+    const payload = {
       type: d.type as RequestType,
       title: d.title,
       customer: d.customer,
@@ -173,11 +222,20 @@ export default function NewRequestDialog({
       plantNotes: d.plantNotes || "Sem observações da fábrica.",
       justification: d.justification,
       items: newItems,
-    });
+      assignedTo: target === "auto" ? undefined : target,
+    };
 
+    if (editing) {
+      update(editing.id, payload, salesRep, editorRole, editNote.trim());
+      toast({ title: "Solicitação alterada", description: `${editing.id} atualizada e registrada na auditoria.` });
+      onOpenChange(false);
+      return;
+    }
+
+    const created = create(payload);
     toast({
       title: "Solicitação criada",
-      description: `${created.id} entrou na fila de aprovação.`,
+      description: `${created.id} enviada para ${ROLE_LABEL[target === "auto" ? resolveAuthority(created).level : target]}.`,
     });
     resetForm();
     onOpenChange(false);
@@ -187,7 +245,7 @@ export default function NewRequestDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Nova solicitação de alçada</DialogTitle>
+          <DialogTitle>{editing ? `Alterar ${editing.id}` : "Nova solicitação de alçada"}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -322,9 +380,25 @@ export default function NewRequestDialog({
           <Textarea value={justification} onChange={e => setJustification(e.target.value)} placeholder="Ex.: Cliente estratégico com recorrência mensal; desconto viabiliza fechamento da obra." className="min-h-20" />
         </label>
 
+        <label className="mt-3 block space-y-1">
+          <span className="text-xs font-medium text-muted-foreground">Enviar para</span>
+          <select value={target} onChange={e => setTarget(e.target.value as ApproverRole | "auto")} className={inputCls}>
+            <option value="auto">Automático (pela regra de alçada)</option>
+            {APPROVER_ROLES.map(r => (
+              <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+            ))}
+          </select>
+        </label>
+        {editing && (
+          <label className="mt-3 block space-y-1">
+            <span className="text-xs font-medium text-muted-foreground">Motivo da alteração (obrigatório)</span>
+            <Textarea value={editNote} onChange={e => setEditNote(e.target.value)} placeholder="Ex.: Ajustado desconto para 8% conforme pedido do gerente." className="min-h-16" />
+          </label>
+        )}
+
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit}>Enviar para aprovação</Button>
+          <Button onClick={submit}>{editing ? "Salvar alterações" : "Enviar para aprovação"}</Button>
         </div>
       </DialogContent>
     </Dialog>

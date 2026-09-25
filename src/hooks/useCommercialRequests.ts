@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { COMMERCIAL_REQUESTS } from "@/data/commercial-mock";
 import { queueStatus } from "@/lib/commercial-engine";
-import type { ApprovalStatus, CommercialRequest, UserRole } from "@/types/commercial";
+import type { ApprovalStatus, ApproverRole, CommercialRequest, UserRole } from "@/types/commercial";
 
 const LS_KEY = "portal_vidreiro_solicitacoes_v1";
 
@@ -108,9 +108,43 @@ export function useCommercialRequests() {
     return request;
   }, []);
 
+  const update = useCallback(
+    (id: string, input: NewRequestInput, actor: string, role: UserRole, note: string) => {
+      const next = read().map(r => {
+        if (r.id !== id) return r;
+        const merged: CommercialRequest = { ...r, ...input, salesRep: r.salesRep };
+        merged.status = queueStatus(merged);
+        merged.history = [
+          ...r.history,
+          { id: `h${r.history.length + 1}-${Date.now()}`, role, actor, action: "editou", justification: note, at: new Date().toISOString() },
+        ];
+        return merged;
+      });
+      write(next);
+    },
+    [],
+  );
+
+  const forward = useCallback(
+    (id: string, target: ApproverRole, justification: string, actor: string, role: UserRole) => {
+      const next = read().map(r => {
+        if (r.id !== id) return r;
+        const merged: CommercialRequest = { ...r, assignedTo: target };
+        merged.status = queueStatus(merged);
+        merged.history = [
+          ...r.history,
+          { id: `h${r.history.length + 1}-${Date.now()}`, role, actor, action: "encaminhou", justification, at: new Date().toISOString() },
+        ];
+        return merged;
+      });
+      write(next);
+    },
+    [],
+  );
+
   const reset = useCallback(() => {
     write(COMMERCIAL_REQUESTS);
   }, []);
 
-  return { requests, decide, create, reset };
+  return { requests, decide, create, update, forward, reset };
 }

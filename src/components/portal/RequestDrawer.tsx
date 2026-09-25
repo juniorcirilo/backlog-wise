@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
+import NewRequestDialog from "@/components/portal/NewRequestDialog";
 import {
   BRL,
   BRL2,
@@ -19,10 +20,14 @@ import {
   itemWeightKg,
   resolveAuthority,
   riskClasses,
+  isOpen,
   statusClasses,
 } from "@/lib/commercial-engine";
 import {
+  ACTION_LABEL,
+  APPROVER_ROLES,
   PRODUCT_LINE_LABEL,
+  type ApproverRole,
   REQUEST_TYPE_LABEL,
   ROLE_LABEL,
   STATUS_LABEL,
@@ -35,6 +40,8 @@ import {
   Clock,
   Factory,
   Layers,
+  Pencil,
+  Send,
   ShieldAlert,
   User,
   XCircle,
@@ -44,7 +51,7 @@ const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function RequestDrawer({
-  request,
+  request: requestProp,
   onOpenChange,
   actorName,
 }: {
@@ -52,9 +59,15 @@ export default function RequestDrawer({
   onOpenChange: (open: boolean) => void;
   actorName: string;
 }) {
-  const { decide } = useCommercialRequests();
+  const { decide, forward, requests } = useCommercialRequests();
   const { toast } = useToast();
   const [justification, setJustification] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [forwardTo, setForwardTo] = useState<ApproverRole>("gerente_financeiro");
+  const request = useMemo(
+    () => (requestProp ? requests.find(r => r.id === requestProp.id) ?? requestProp : null),
+    [requestProp, requests],
+  );
 
   const metrics = useMemo(() => (request ? computeMetrics(request) : null), [request]);
   const authority = useMemo(() => (request ? resolveAuthority(request) : null), [request]);
@@ -76,7 +89,7 @@ export default function RequestDrawer({
       action,
       justification: justification.trim(),
       actor: actorName,
-      role: authority.level === "diretoria" ? "diretoria" : authority.level,
+      role: request.assignedTo ?? authority.level,
     });
     toast({
       title:
@@ -91,7 +104,26 @@ export default function RequestDrawer({
     onOpenChange(false);
   };
 
+  const currentRole: ApproverRole = request.assignedTo ?? authority.level;
+
+  const doForward = () => {
+    if (justification.trim().length < 10) {
+      toast({ title: "Justificativa obrigatória", description: "Explique em pelo menos 10 caracteres por que está encaminhando.", variant: "destructive" });
+      return;
+    }
+    if (forwardTo === currentRole && isOpen(request) && request.status !== "ajuste_solicitado") {
+      toast({ title: "Mesmo setor", description: "A solicitação já está com esse setor.", variant: "destructive" });
+      return;
+    }
+    forward(request.id, forwardTo, justification.trim(), actorName, currentRole);
+    toast({ title: "Solicitação encaminhada", description: `${request.id} enviada para ${ROLE_LABEL[forwardTo]}.` });
+    setJustification("");
+    onOpenChange(false);
+  };
+
   return (
+    <>
+    <NewRequestDialog open={editOpen} onOpenChange={setEditOpen} salesRep={actorName} editing={request} editorRole={currentRole} />
     <Sheet open onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader className="text-left">
@@ -106,7 +138,13 @@ export default function RequestDrawer({
               {RISK_LABEL[authority.risk]}
             </span>
           </div>
-          <SheetTitle className="text-xl leading-snug">{request.title}</SheetTitle>
+          <div className="flex items-start justify-between gap-3">
+            <SheetTitle className="text-xl leading-snug">{request.title}</SheetTitle>
+            <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={() => setEditOpen(true)}>
+              <Pencil className="h-3.5 w-3.5" /> Alterar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">Com o setor: <span className="font-semibold text-foreground">{ROLE_LABEL[currentRole]}</span></p>
           <p className="text-sm text-muted-foreground">
             {request.customer} · {request.customerSegment} · {REQUEST_TYPE_LABEL[request.type]}
           </p>
@@ -220,7 +258,7 @@ export default function RequestDrawer({
                 <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-accent" />
                 <p className="text-sm font-medium">
                   {step.actor} · {ROLE_LABEL[step.role]}{" "}
-                  <span className="font-normal text-muted-foreground">{step.action.replace("_", " ")}</span>
+                  <span className="font-normal text-muted-foreground">{ACTION_LABEL[step.action] ?? step.action}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">{fmtDate(step.at)}</p>
                 <p className="mt-1 text-sm">{step.justification}</p>
@@ -252,9 +290,25 @@ export default function RequestDrawer({
               <XCircle className="h-4 w-4" /> Rejeitar
             </Button>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
+            <span className="text-xs font-medium text-muted-foreground">Encaminhar / devolver para</span>
+            <select
+              value={forwardTo}
+              onChange={e => setForwardTo(e.target.value as ApproverRole)}
+              className="h-9 rounded-lg border border-border bg-bg-surface-1 px-2.5 text-sm outline-none focus:border-accent"
+            >
+              {APPROVER_ROLES.map(r => (
+                <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+              ))}
+            </select>
+            <Button variant="secondary" onClick={doForward} className="gap-2">
+              <Send className="h-4 w-4" /> Encaminhar
+            </Button>
+          </div>
         </section>
       </SheetContent>
     </Sheet>
+    </>
   );
 }
 

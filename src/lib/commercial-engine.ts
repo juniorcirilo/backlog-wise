@@ -179,7 +179,12 @@ export function statusClasses(status: ApprovalStatus): string {
 }
 
 /** Status inicial de fila conforme a alçada exigida. */
+export function statusForRole(role: "gerente_comercial" | "gerente_financeiro" | "diretoria"): ApprovalStatus {
+  return role === "diretoria" ? "analise_diretoria" : role === "gerente_financeiro" ? "analise_financeira" : "analise_comercial";
+}
+
 export function queueStatus(req: CommercialRequest): ApprovalStatus {
+  if (req.assignedTo) return statusForRole(req.assignedTo);
   const { level } = resolveAuthority(req);
   if (level === "diretoria") return "analise_diretoria";
   if (level === "gerente_financeiro") return "analise_financeira";
