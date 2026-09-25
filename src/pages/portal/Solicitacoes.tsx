@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
 import RequestCard from "@/components/portal/RequestCard";
 import RequestDrawer from "@/components/portal/RequestDrawer";
+import { useCatalog } from "@/hooks/useCatalog";
 import NewRequestDialog from "@/components/portal/NewRequestDialog";
 import { Button } from "@/components/ui/button";
 import { BRL, computeMetrics, isOpen, resolveAuthority } from "@/lib/commercial-engine";

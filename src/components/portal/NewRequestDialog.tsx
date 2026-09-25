@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useCatalog } from "@/hooks/useCatalog";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
 import { BRL2, itemArea, resolveAuthority } from "@/lib/commercial-engine";
 import {
@@ -91,6 +92,14 @@ export default function NewRequestDialog({
   editorRole?: UserRole;
 }) {
   const { create, update } = useCommercialRequests();
+  const catalog = useCatalog();
+  const addNew = (kind: "types" | "lines", onId: (id: string) => void) => {
+    const label = window.prompt(kind === "types" ? "Nome do novo tipo de solicitação" : "Nome do novo item / linha de produto");
+    if (!label) return;
+    const id = catalog.add(kind, label);
+    if (id) onId(id);
+    else toast({ title: "Nome muito curto", variant: "destructive" });
+  };
   const [target, setTarget] = useState<ApproverRole | "auto">("auto");
   const [editNote, setEditNote] = useState("");
   const { toast } = useToast();
@@ -251,11 +260,16 @@ export default function NewRequestDialog({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="space-y-1">
             <span className="text-xs font-medium text-muted-foreground">Tipo</span>
-            <select value={type} onChange={e => setType(e.target.value as RequestType)} className={inputCls}>
-              {(Object.keys(REQUEST_TYPE_LABEL) as RequestType[]).map(t => (
-                <option key={t} value={t}>{REQUEST_TYPE_LABEL[t]}</option>
-              ))}
-            </select>
+            <div className="flex gap-1.5">
+              <select value={type} onChange={e => setType(e.target.value as RequestType)} className={inputCls}>
+                {Object.entries(catalog.typeLabels).map(([t, l]) => (
+                  <option key={t} value={t}>{l}</option>
+                ))}
+              </select>
+              <Button type="button" variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" title="Novo tipo" onClick={() => addNew("types", setType)}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </label>
           <label className="space-y-1">
             <span className="text-xs font-medium text-muted-foreground">Título</span>
@@ -320,10 +334,13 @@ export default function NewRequestDialog({
                 <div key={idx} className="rounded-xl border bg-bg-surface-1 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <select value={it.line} onChange={e => setItem(idx, { line: e.target.value as GlassProductLine })} className={inputCls}>
-                      {(Object.keys(PRODUCT_LINE_LABEL) as GlassProductLine[]).map(l => (
-                        <option key={l} value={l}>{PRODUCT_LINE_LABEL[l]}</option>
+                      {Object.entries(catalog.lineLabels).map(([l, lbl]) => (
+                        <option key={l} value={l}>{lbl}</option>
                       ))}
                     </select>
+                    <Button type="button" variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" title="Novo item" onClick={() => addNew("lines", id => setItem(idx, { line: id }))}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
                     {items.length > 1 && (
                       <button type="button" onClick={() => setItems(p => p.filter((_, i) => i !== idx))} className="text-muted-foreground hover:text-destructive">
                         <Trash2 className="h-4 w-4" />

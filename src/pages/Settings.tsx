@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SettingsSidebar, { type SettingsSection } from "@/components/settings/SettingsSidebar";
 import ServiceKeyCard from "@/components/settings/ServiceKeyCard";
 import DemoSection from "@/components/settings/DemoSection";
+import CatalogSection from "@/components/settings/CatalogSection";
 import ProfileSection from "@/components/settings/ProfileSection";
 import TeamManagement from "@/pages/TeamManagement";
 import SecuritySettings from "@/pages/SecuritySettings";
@@ -58,6 +59,8 @@ export default function Settings() {
 
         <div className="flex-1 min-w-0">
           {section === "profile" && <ProfileSection />}
+
+          {section === "catalog" && <CatalogSection />}
 
           {section === "demo" && <DemoSection />}
 
