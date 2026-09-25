@@ -39,7 +39,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <Layers className="h-5 w-5 text-white" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-bold tracking-tight">Portal de Alçadas</p>
+          <p className="font-bold tracking-tight">TaskFlow</p>
           <p className="-mt-0.5 text-[11px] text-sidebar-foreground/60">Comercial & Financeiro · Vidros</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function AppLayout() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent">
               <Layers className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold">Portal de Alçadas</span>
+            <span className="font-bold">TaskFlow</span>
           </div>
         </header>
         <main key={location.pathname} className="flex-1 animate-fade-up">
