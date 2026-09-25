@@ -36,7 +36,7 @@ export default function ProtectedRoute({ children, allowedRoles }: Props) {
   }
 
   if (profile.is_approved === false) {
-    return <Navigate to="/pending-approval" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && allowedRoles.length > 0 && (!role || !allowedRoles.includes(role))) {
