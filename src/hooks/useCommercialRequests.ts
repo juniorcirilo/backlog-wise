@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { COMMERCIAL_REQUESTS } from "@/data/commercial-mock";
+import { queueStatus } from "@/lib/commercial-engine";
 import type { ApprovalStatus, CommercialRequest, UserRole } from "@/types/commercial";
 
 const LS_KEY = "portal_vidreiro_solicitacoes_v1";
@@ -28,6 +29,8 @@ function write(data: CommercialRequest[]) {
   }
   listeners.forEach(l => l(data));
 }
+
+export type NewRequestInput = Omit<CommercialRequest, "id" | "createdAt" | "status" | "history">;
 
 export interface DecisionInput {
   action: "aprovou" | "rejeitou" | "solicitou_ajuste";
@@ -75,9 +78,39 @@ export function useCommercialRequests() {
     write(next);
   }, []);
 
+  const create = useCallback((input: NewRequestInput): CommercialRequest => {
+    const current = read();
+    const year = new Date().getFullYear();
+    const seq =
+      current.reduce((max, r) => {
+        const m = r.id.match(/SOL-\d+-(\d+)/);
+        return m ? Math.max(max, parseInt(m[1], 10)) : max;
+      }, 0) + 1;
+    const request: CommercialRequest = {
+      ...input,
+      id: `SOL-${year}-${String(seq).padStart(3, "0")}`,
+      createdAt: new Date().toISOString(),
+      status: "analise_comercial",
+      history: [
+        {
+          id: `h1-${Date.now()}`,
+          role: "vendedor",
+          actor: input.salesRep,
+          action: "criou",
+          justification: input.justification,
+          at: new Date().toISOString(),
+        },
+      ],
+    };
+    // Status inicial de fila conforme a alçada exigida
+    request.status = queueStatus(request);
+    write([request, ...current]);
+    return request;
+  }, []);
+
   const reset = useCallback(() => {
     write(COMMERCIAL_REQUESTS);
   }, []);
 
-  return { requests, decide, reset };
+  return { requests, decide, create, reset };
 }

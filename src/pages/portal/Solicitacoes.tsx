@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCommercialRequests } from "@/hooks/useCommercialRequests";
 import RequestCard from "@/components/portal/RequestCard";
 import RequestDrawer from "@/components/portal/RequestDrawer";
+import NewRequestDialog from "@/components/portal/NewRequestDialog";
+import { Button } from "@/components/ui/button";
 import { BRL, computeMetrics, isOpen, resolveAuthority } from "@/lib/commercial-engine";
 import {
   PRODUCT_LINE_LABEL,
@@ -12,7 +14,7 @@ import {
   type RequestType,
 } from "@/types/commercial";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 type Filter = "abertas" | "diretoria" | "financeira" | "comercial" | "finalizadas" | "todas";
 
@@ -33,6 +35,7 @@ export default function Solicitacoes() {
   const [type, setType] = useState<RequestType | "todos">("todos");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CommercialRequest | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Aprovador";
 
@@ -59,11 +62,16 @@ export default function Solicitacoes() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 lg:px-12 lg:py-10">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">Solicitações</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {list.length} solicitações · {BRL(total)} em valor líquido
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Solicitações</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {list.length} solicitações · {BRL(total)} em valor líquido
+          </p>
+        </div>
+        <Button onClick={() => setNewOpen(true)} className="gap-2">
+          <Plus className="h-4 w-4" /> Nova solicitação
+        </Button>
       </header>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -127,6 +135,7 @@ export default function Solicitacoes() {
       </div>
 
       <RequestDrawer request={selected} onOpenChange={o => !o && setSelected(null)} actorName={userName} />
+      <NewRequestDialog open={newOpen} onOpenChange={setNewOpen} salesRep={userName} />
     </div>
   );
 }
