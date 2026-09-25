@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Authenticated users read issue scores" ON public.issue_scores;
+CREATE POLICY "Admins read issue scores" ON public.issue_scores FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::app_role));
