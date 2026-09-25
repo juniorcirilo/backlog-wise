@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { COMMERCIAL_REQUESTS } from "@/data/commercial-mock";
+import { queueStatus } from "@/lib/commercial-engine";
 import type { ApprovalStatus, CommercialRequest, UserRole } from "@/types/commercial";
 
 const LS_KEY = "portal_vidreiro_solicitacoes_v1";
